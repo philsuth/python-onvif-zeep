@@ -36,7 +36,7 @@ class UsernameDigestTokenDtDiff(UsernameToken):
     this should only be used in "safe" environments.
     """
     def __init__(self, user, passw, dt_diff=None, **kwargs):
-        super().__init__(user, passw, **kwargs)
+        super(UsernameDigestTokenDtDiff, self).__init__(user, passw, **kwargs)
         self.dt_diff = dt_diff  # Date/time difference in datetime.timedelta
 
     def apply(self, envelope, headers):
@@ -45,7 +45,7 @@ class UsernameDigestTokenDtDiff(UsernameToken):
             self.created = dt.datetime.utcnow()
         if self.dt_diff is not None:
             self.created += self.dt_diff
-        result = super().apply(envelope, headers)
+        result = super(UsernameDigestTokenDtDiff, self).apply(envelope, headers)
         self.created = old_created
         return result
 
