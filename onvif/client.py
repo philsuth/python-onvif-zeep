@@ -12,6 +12,8 @@ import zeep.helpers
 from onvif.exceptions import ONVIFError
 from onvif.definition import SERVICES
 
+import urlparse
+
 logger = logging.getLogger('onvif')
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('zeep.client').setLevel(logging.CRITICAL)
@@ -231,7 +233,14 @@ class ONVIFCamera(object):
         self.xaddrs = {}
         capabilities = self.devicemgmt.GetCapabilities({'Category': 'All'})
         for name in capabilities:
+            if capabilities[name] is not None and 'XAddr' in capabilities[name]:
+                url = list(urlparse.urlparse(capabilities[name].XAddr))
+                url[1] = self.host + ':' + str(self.port)
+                newurl = urlparse.urlunparse(url)
+                capabilities[name].XAddr = newurl
+
             capability = capabilities[name]
+
             try:
                 if name.lower() in SERVICES and capability is not None:
                     ns = SERVICES[name.lower()]['ns']
