@@ -11,7 +11,7 @@ import zeep.helpers
 
 from onvif.exceptions import ONVIFError
 from onvif.definition import SERVICES
-
+# update the following import to make python 2/3 compatible
 import urlparse
 
 logger = logging.getLogger('onvif')
@@ -234,10 +234,14 @@ class ONVIFCamera(object):
         capabilities = self.devicemgmt.GetCapabilities({'Category': 'All'})
         for name in capabilities:
             if capabilities[name] is not None and 'XAddr' in capabilities[name]:
-                url = list(urlparse.urlparse(capabilities[name].XAddr))
-                url[1] = self.host + ':' + str(self.port)
-                newurl = urlparse.urlunparse(url)
-                capabilities[name].XAddr = newurl
+                try:
+                    url = list(urlparse.urlparse(capabilities[name].XAddr))
+                except ValueError:
+                    pass
+                else:
+                    url[1] = self.host + ':' + str(self.port)
+                    newurl = urlparse.urlunparse(url)
+                    capabilities[name].XAddr = newurl
 
             capability = capabilities[name]
 
