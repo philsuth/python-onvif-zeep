@@ -11,6 +11,8 @@ import zeep.helpers
 
 from onvif.exceptions import ONVIFError
 from onvif.definition import SERVICES
+# update the following import to make python 2/3 compatible
+import urlparse
 
 logger = logging.getLogger('onvif')
 logging.basicConfig(level=logging.INFO)
@@ -36,7 +38,7 @@ class UsernameDigestTokenDtDiff(UsernameToken):
     this should only be used in "safe" environments.
     """
     def __init__(self, user, passw, dt_diff=None, **kwargs):
-        super().__init__(user, passw, **kwargs)
+        super(UsernameDigestTokenDtDiff, self).__init__(user, passw, **kwargs)
         self.dt_diff = dt_diff  # Date/time difference in datetime.timedelta
 
     def apply(self, envelope, headers):
@@ -45,7 +47,7 @@ class UsernameDigestTokenDtDiff(UsernameToken):
             self.created = dt.datetime.utcnow()
         if self.dt_diff is not None:
             self.created += self.dt_diff
-        result = super().apply(envelope, headers)
+        result = super(UsernameDigestTokenDtDiff, self).apply(envelope, headers)
         self.created = old_created
         return result
 
@@ -231,7 +233,18 @@ class ONVIFCamera(object):
         self.xaddrs = {}
         capabilities = self.devicemgmt.GetCapabilities({'Category': 'All'})
         for name in capabilities:
+            if capabilities[name] is not None and 'XAddr' in capabilities[name]:
+                try:
+                    url = list(urlparse.urlparse(capabilities[name].XAddr))
+                except ValueError:
+                    pass
+                else:
+                    url[1] = self.host + ':' + str(self.port)
+                    newurl = urlparse.urlunparse(url)
+                    capabilities[name].XAddr = newurl
+
             capability = capabilities[name]
+
             try:
                 if name.lower() in SERVICES and capability is not None:
                     ns = SERVICES[name.lower()]['ns']
